@@ -11,5 +11,8 @@
   , "mysql" : "*"
   , "request" : "*"
   , "body-parser" : "*"
+  , "nodemailer" : "*"
+  , "jsonwebtoken" : "*"
+  , "express-jwt" : "*"
   }
 }
