@@ -84,6 +84,7 @@ app.post('/authenticate', function(req, res){
 	var email = req.body.email;
 	var password = req.body.password;
 	database.authenticateUser(email, password, function(data){
+		console.log(data);
 		var tokenData = {
 			id: data[0].USER_ID,
 			email: data[0].USER_EMAIL,
