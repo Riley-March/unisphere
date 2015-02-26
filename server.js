@@ -1,159 +1,149 @@
-#!/bin/env node
-//  OpenShift sample Node application
 var express = require('express');
-var fs      = require('fs');
+var path = require('path');
+var mysql = require('mysql');
+var fs = require('fs');
+var jwt = require('jsonwebtoken');
+var expressJwt = require('express-jwt');
+var nodemailer = require("nodemailer");
+var database = require('./server_modules/database.js');
+var bodyParser = require('body-parser');
+var app = express();
+var done=false;
 
+app.configure(function(){
+	app.use(express.bodyParser());
+	app.use(express.static(path.join(__dirname, 'client_modules')));
+	app.use(express.static(path.join(__dirname, 'public')));
+	app.use(bodyParser.json());
+	app.use(bodyParser.urlencoded({
+		extended: true
+	})); 
+});
 
-/**
- *  Define the sample application.
- */
-var SampleApp = function() {
+var tokens = [];
+var secret = 'this is the secret secret secret 12356';
 
-    //  Scope.
-    var self = this;
+app.use('/api', expressJwt({secret: secret}));
 
+var connection = database.dbConnect();
 
-    /*  ================================================================  */
-    /*  Helper functions.                                                 */
-    /*  ================================================================  */
-
-    /**
-     *  Set up server IP address and port # using env variables/defaults.
-     */
-    self.setupVariables = function() {
-        //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-        self.port      = process.env.OPENSHIFT_NODEJS_PORT || 8080;
-
-        if (typeof self.ipaddress === "undefined") {
-            //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
-            //  allows us to run/test the app locally.
-            console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
-            self.ipaddress = "127.0.0.1";
-        };
-    };
-
-
-    /**
-     *  Populate the cache.
-     */
-    self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = { 'index.html': '' };
+function removeFromTokens(token) {
+    for (var counter = 0; counter < tokens.length; counter++) {
+        if (tokens[counter] === token) {
+            tokens.splice(counter, 1);
+            break;
         }
+    }
+}
 
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./index.html');
-    };
+app.get('/', function (req, res) {
+	res.sendfile("./public/html/index.html");
+});
 
+app.get('/loadProfiles', function (req, res) {
+	database.getProfiles(function(data){
+		res.setHeader('Content-Type', 'application/json');
+		res.end(JSON.stringify(data));
+	});
+});
 
-    /**
-     *  Retrieve entry (content) from cache.
-     *  @param {string} key  Key identifying content to retrieve from cache.
-     */
-    self.cache_get = function(key) { return self.zcache[key]; };
+app.post('/loadProfile', function (req, res) {
+	var id = req.body.id;
+	database.loadProfile(id, function(data){
+		res.setHeader('Content-Type', 'application/json');
+		res.end(JSON.stringify(data));
+	});
+});
 
+app.get('/loadPosts', function (req, res) {
+	database.getPosts(function(data){
+		res.setHeader('Content-Type', 'application/json');
+		res.end(JSON.stringify(data));
+	});
+});
 
-    /**
-     *  terminator === the termination handler
-     *  Terminate server on receipt of the specified signal.
-     *  @param {string} sig  Signal to terminate on.
-     */
-    self.terminator = function(sig){
-        if (typeof sig === "string") {
-           console.log('%s: Received %s - terminating sample app ...',
-                       Date(Date.now()), sig);
-           process.exit(1);
+app.post('/newPost', function (req, res) {
+	var time = new Date();
+	var token = req.body.token;
+	var decodedToken = jwt.decode(token);
+	var post = {
+		name: decodedToken.name,
+		message: req.body.message,
+		time: time.getTime(),
+		emailFrag: decodedToken.emailFrag,
+		email: decodedToken.email
+	};
+	database.newPost(post);
+	res.json({post: post});
+});
+
+app.post('/authenticate', function(req, res){
+	var email = req.body.email;
+	var password = req.body.password;
+	database.authenticateUser(email, password, function(data){
+		var tokenData = {
+			id: data[0].USER_ID,
+			email: data[0].USER_EMAIL,
+			name: data[0].USER_NAME,
+			emailFrag: data[0].USER_EMAIL_FRAG
+		}
+		var token = jwt.sign(tokenData, secret, { expiresInMinutes: 60*5 }, { algorithm: 'RS256'});
+		tokens.push(token);
+		res.json(200, {token: token, id: data[0].USER_ID, emailFrag: data[0].USER_EMAIL_FRAG});
+	});	
+});
+
+app.post('/logout', function(req, res){
+	var token = req.headers.token;
+	removeFromTokens(token);
+    res.send(200);
+});
+
+app.post('/addUser', function(req, res){
+	var keypin = Math.floor((Math.random() * 9999) + 1);
+	var user = {
+			email: req.body.email,
+			name: req.body.name,
+			alias: req.body.alias,
+			description: req.body.description,
+			keycode: keypin,
+			emailFrag: req.body.email
+	};
+	var transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth:{
+            user: "unisphere.keys@gmail.com",
+            pass: "unisphere123"
         }
-        console.log('%s: Node server stopped.', Date(Date.now()) );
+    });
+    var text = "To continue your registration please enter this code to continue.\n\n" +
+        keypin;
+    var mailOptions = {
+        from: 'Admin@Unisphere',
+        to: user.email,
+        subject: "Confirm Account",
+        text: text
     };
-
-
-    /**
-     *  Setup termination handlers (for exit and a list of signals).
-     */
-    self.setupTerminationHandlers = function(){
-        //  Process on exit and signals.
-        process.on('exit', function() { self.terminator(); });
-
-        // Removed 'SIGPIPE' from the list - bugz 852598.
-        ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-         'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-        ].forEach(function(element, index, array) {
-            process.on(element, function() { self.terminator(element); });
-        });
-    };
-
-
-    /*  ================================================================  */
-    /*  App server functions (main app logic here).                       */
-    /*  ================================================================  */
-
-    /**
-     *  Create the routing table entries + handlers for the application.
-     */
-    self.createRoutes = function() {
-        self.routes = { };
-
-        self.routes['/asciimo'] = function(req, res) {
-            var link = "http://i.imgur.com/kmbjB.png";
-            res.send("<html><body><img src='" + link + "'></body></html>");
-        };
-
-        self.routes['/'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('index.html') );
-        };
-    };
-
-
-    /**
-     *  Initialize the server (express) and create the routes and register
-     *  the handlers.
-     */
-    self.initializeServer = function() {
-        self.createRoutes();
-        self.app = express.createServer();
-
-        //  Add handlers for the app (from the routes).
-        for (var r in self.routes) {
-            self.app.get(r, self.routes[r]);
+    transporter.sendMail(mailOptions, function(error, info){
+        if(error){
+            console.log(error);
+        }else{
+            console.log('Message sent: ' + info.response);
         }
-    };
+    });
+    database.addUser(user);
+    res.json({keypin: keypin});
+});
+
+app.post('/confirmUser', function(req, res){
+	var keypin = req.body.keypin;
+	var email = req.body.email;
+	database.confirmCode(email, keypin, function(data){
+		res.send(200);
+	});
+});
 
 
-    /**
-     *  Initializes the sample application.
-     */
-    self.initialize = function() {
-        self.setupVariables();
-        self.populateCache();
-        self.setupTerminationHandlers();
-
-        // Create the express server and routes.
-        self.initializeServer();
-    };
-
-
-    /**
-     *  Start the server (starts up the sample application).
-     */
-    self.start = function() {
-        //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.ipaddress, function() {
-            console.log('%s: Node server started on %s:%d ...',
-                        Date(Date.now() ), self.ipaddress, self.port);
-        });
-    };
-
-};   /*  Sample Application.  */
-
-
-
-/**
- *  main():  Main code.
- */
-var zapp = new SampleApp();
-zapp.initialize();
-zapp.start();
-
+var server = app.listen(3000, function () {
+  console.log("Server Running!");
+});
