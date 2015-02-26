@@ -1,0 +1,22 @@
+body{ 
+	background: #DFE2DB !important;
+	font-size: 14px !important;
+}
+
+h1,h2,h3,h4,h5,h6,p {
+ line-height: 1.45;
+}
+
+.navbar-brand {
+  float: none;
+ }
+
+.navbar-center{
+    position: absolute;
+    width: 100%;
+    left: 0;
+    top: 0;
+    text-align: center;
+    margin: auto;
+  height:100%;
+}
