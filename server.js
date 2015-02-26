@@ -2,10 +2,10 @@ var express = require('express');
 var path = require('path');
 var mysql = require('mysql');
 var fs = require('fs');
-//var jwt = require('jsonwebtoken');
+var jwt = require('jsonwebtoken');
 var expressJwt = require('express-jwt');
 var nodemailer = require("nodemailer");
-var database = require('/server_modules/database.js');
+var database = require('./server_modules/database.js');
 var bodyParser = require('body-parser');
 var app = express();
 var done=false;
@@ -148,5 +148,5 @@ app.post('/confirmUser', function(req, res){
 
 
 var server = app.listen(server_port, server_ip_address, function () {
-  console.log("Server Running!");
+  console.log("Listening on " + server_ip_address + ", server_port " + server_port)
 });
