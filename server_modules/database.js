@@ -58,6 +58,7 @@ function newPost(post){
 }
 
 function authenticateUser(email, password, callback){
+	console.log("email: " + email + "password: " + password);
 	connection.query("SELECT * FROM uni_users WHERE USER_EMAIL = (?) and USER_KEYPIN = (?)", [email, password], function(err, rows){
 		callback(rows);
 	});
