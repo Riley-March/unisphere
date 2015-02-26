@@ -10,6 +10,5 @@
   , "mysql" : "*"
   , "request" : "*"
   , "body-parser" : "*"
-  , "jsdom" : "*"
   }
 }
