@@ -4,10 +4,10 @@ var testConnection;
 
 function dbConnect(){
 	connection = mysql.createConnection({
-		host: process.env.OPENSHIFT_EXT_MYSQL_DB_HOST,
-		user: process.env.OPENSHIFT_EXT_MYSQL_DB_USERNAME,
-		password:  process.env.OPENSHIFT_EXT_MYSQL_DB_PASSWORD,
-		database:  process.env.OPENSHIFT_EXT_MYSQL_DB_NAME
+		host: process.env.OPENSHIFT_MYSQL_DB_HOST,
+		user: process.env.OPENSHIFT_MYSQL_DB_USERNAME,
+		password:  process.env.OPENSHIFT_MYSQL_DB_PASSWORD,
+		database:  process.env.OPENSHIFT_MYSQL_DB_NAME
 	});
 	console.log("Database Connected");
 }
