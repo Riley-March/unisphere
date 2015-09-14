@@ -1,20 +1,3 @@
+# Unisphere
 
-
-# Forum 2.0
-
-
-
-## Usage
-
-
-
-## Developing
-
-
-
-### Tools
-
-Created with [Nodeclipse](https://github.com/Nodeclipse/nodeclipse-1)
- ([Eclipse Marketplace](http://marketplace.eclipse.org/content/nodeclipse), [site](http://www.nodeclipse.org))   
-
-Nodeclipse is free open-source project that grows with your contributions.
+Unisphere is an exclusive online directory and notice board that automatically connects you with everyone at your university or business.
