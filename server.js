@@ -1,152 +1,161 @@
 var express = require('express');
+var request = require('request');
 var path = require('path');
-var mysql = require('mysql');
-var fs = require('fs');
-var jwt = require('jsonwebtoken');
-var expressJwt = require('express-jwt');
-var nodemailer = require("nodemailer");
-var database = require('./server_modules/database.js');
+var fileSystem = require('fs');
+var nodeMailer = require('nodemailer');
 var bodyParser = require('body-parser');
+var util = require('util');
+var uuid = require('uuid');
+var jwt = require('jsonwebtoken');
+var session = require('express-session');
+var multer = require('multer');
+var db = require('./database.js');
+
 var app = express();
-var done=false;
+var router = express.Router();
+var serverPort = 8080;
+var serverIPAddress = '127.0.0.1';
 
-app.configure(function(){
-	app.use(express.bodyParser());
-	app.use(express.static(path.join(__dirname, 'client_modules')));
-	app.use(express.static(path.join(__dirname, 'public')));
-	app.use(bodyParser.json());
-	app.use(bodyParser.urlencoded({
-		extended: true
-	})); 
-});
+app.use(express.static(path.join(__dirname, 'node_modules')));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(session({secret: 'unisphere', saveUninitialized: true, resave: false}));
 
-var tokens = [];
-var secret = 'this is the secret secret secret 12356';
-
-var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080
-var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1'
-
-app.use('/api', expressJwt({secret: secret}));
-
-var connection = database.dbConnect();
-
-function removeFromTokens(token) {
-    for (var counter = 0; counter < tokens.length; counter++) {
-        if (tokens[counter] === token) {
-            tokens.splice(counter, 1);
-            break;
-        }
-    }
-}
-
-app.get('/', function (req, res) {
-	res.sendfile("./public/html/index.html");
-});
-
-app.get('/loadProfiles', function (req, res) {
-	database.getProfiles(function(data){
-		res.setHeader('Content-Type', 'application/json');
-		res.end(JSON.stringify(data));
-	});
-});
-
-app.post('/loadProfile', function (req, res) {
-	var id = req.body.id;
-	database.loadProfile(id, function(data){
-		res.setHeader('Content-Type', 'application/json');
-		res.end(JSON.stringify(data));
-	});
-});
-
-app.get('/loadPosts', function (req, res) {
-	database.getPosts(function(data){
-		res.setHeader('Content-Type', 'application/json');
-		res.end(JSON.stringify(data));
-	});
-});
-
-app.post('/newPost', function (req, res) {
-	var time = new Date();
-	var token = req.body.token;
-	var decodedToken = jwt.decode(token);
-	var post = {
-		name: decodedToken.name,
-		message: req.body.message,
-		time: time.getTime(),
-		emailFrag: decodedToken.emailFrag,
-		email: decodedToken.email
-	};
-	database.newPost(post);
-	res.json({post: post});
+app.get('/*', function(req, res){
+    res.sendFile('index.html', { root: path.join(__dirname, './public/html') });
 });
 
 app.post('/authenticate', function(req, res){
-	var email = req.body.email;
-	var password = req.body.password;
-	database.authenticateUser(email, password, function(data){
-		var tokenData = {
-			id: data[0].USER_ID,
-			email: data[0].USER_EMAIL,
-			name: data[0].USER_NAME,
-			emailFrag: data[0].USER_EMAIL_FRAG
-		}
-		var token = jwt.sign(tokenData, secret, { expiresInMinutes: 60*5 }, { algorithm: 'RS256'});
-		tokens.push(token);
-		res.json(200, {token: token, id: data[0].USER_ID, emailFrag: data[0].USER_EMAIL_FRAG});
-	});	
+    db.loginUser(req.body.email, req.body.password, function(err, loginCorrect, result){
+        if(loginCorrect){
+            var tokenData = {
+                id: result[0]._id,
+                email: result[0].email,
+                name: result[0].name,
+                emailFrag: result[0].emailFrag
+            };
+            var token = jwt.sign(tokenData, 'this is the secret');
+            req.session.user = token;
+            res.status(200).json({token: token});
+        }else{
+            res.status(400).send("Incorrect Username/Password");
+        }                                                    
+    });
 });
 
 app.post('/logout', function(req, res){
-	var token = req.headers.token;
-	removeFromTokens(token);
-    res.send(200);
+    req.session.user = null;
+    res.status(200).send("Logged Out");
 });
 
-app.post('/addUser', function(req, res){
-	var keypin = Math.floor((Math.random() * 9999) + 1);
+app.post('/addUser', multer({dest: './public/images/'}).single('avatar'), function(req, res){
+	var keypin = Math.floor((Math.random() * 8999) + 1000);
+	var email = req.body.email;
+	var emailFrag = email.split("@", 2);
 	var user = {
 			email: req.body.email,
 			name: req.body.name,
 			alias: req.body.alias,
 			description: req.body.description,
-			keycode: keypin,
-			emailFrag: req.body.email
+			password: keypin.toString(),
+			emailFrag: emailFrag[1]
 	};
-	var transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth:{
-            user: "unisphere.keys@gmail.com",
-            pass: "unisphere123"
-        }
+    require("fs").writeFile("./public/images/out.png", req.body.avatar.data, 'base64', function(err) {
+        console.log(err);
     });
-    var text = "To continue your registration please enter this code to continue.\n\n" +
-        keypin;
-    var mailOptions = {
-        from: 'Admin@Unisphere',
-        to: user.email,
-        subject: "Confirm Account",
-        text: text
-    };
-    transporter.sendMail(mailOptions, function(error, info){
-        if(error){
-            console.log(error);
-        }else{
-            console.log('Message sent: ' + info.response);
-        }
-    });
-    database.addUser(user);
-    res.json({keypin: keypin});
+	/*db.checkEmail(user.email, function(err, userExists){
+        if(userExists){
+			res.status(400).send("Email Already Exists");
+		}else{
+			db.addUser(user);
+			res.status(200).json({keypin: keypin});
+		}
+	});*/
 });
 
-app.post('/confirmUser', function(req, res){
-	var keypin = req.body.keypin;
-	var email = req.body.email;
-	database.confirmCode(email, keypin, function(data){
-		res.send(200);
+app.post('/loadPosts', function (req, res) {
+	var decodedToken = jwt.decode(req.body.token);
+	db.getPosts(decodedToken.emailFrag, function(posts){
+		res.status(200).json(posts);
 	});
 });
 
+app.post('/newPost', function (req, res) {
+	var time = new Date();
+	var decodedToken = jwt.decode(req.body.token);
+	var post = {
+		username: decodedToken.name,
+		userID: decodedToken.id,
+		text: req.body.message,
+		time: time.getTime(),
+		emailFrag: decodedToken.emailFrag,
+		email: decodedToken.email
+	};
+	db.newPost(post);
+    res.status(200).json(post);
+});
 
-var server = app.listen(server_port, server_ip_address, function () {
-  console.log("Listening on " + server_ip_address + ", server_port " + server_port)
+app.post('/loadEvents', function (req, res) {
+	var decodedToken = jwt.decode(req.body.token);
+	db.getEvents(decodedToken.emailFrag, function(events){
+		res.status(200).json(events);
+	});
+});
+
+app.post('/newEvent', function(req, res){
+    var decodedToken = jwt.decode(req.body.token);
+    var event = {
+        username: decodedToken.name,
+        userId: decodedToken.id,
+        emailfrag: decodedToken.emailFrag,
+        name: req.body.name,
+        description: req.body.description,
+        time: req.body.time
+    };
+    db.newEvent(event);
+    res.status(200).json(event);
+});
+
+app.post('/loadPeople', function (req, res) {
+	var decodedToken = jwt.decode(req.body.token);
+	db.getPeople(decodedToken.emailFrag, function(people){
+		res.status(200).json(people);
+	});
+});
+
+app.post('/loadProfile', function (req, res) {
+	var decodedToken = jwt.decode(req.body.token);
+	db.getProfile(decodedToken.email, function(profile){
+        res.status(200).json(profile);
+    });
+});
+
+app.post('/updateProfile', function(req, res){
+    var decodedToken = jwt.decode(req.body.token);
+	var user = {
+		email: decodedToken.email,
+		name: req.body.user.name,
+		alias: req.body.user.alias,
+		description: req.body.user.description
+	};
+	db.updateProfile(user, function(result){
+        if(result){
+            res.status(200).send("Profile Updated");
+        }else{
+            res.status(400).send("An error occured. Try again later");
+        }
+    });
+});
+
+app.post('/userStatus', function(req, res){
+    if(!req.session.user){
+        return res.status(200).json({user: false});
+    }
+    res.status(200).json({user: true});
+});
+
+app.listen(3000, () => {
+    db.connectDB();
+    console.log("Listening on port 3000");        
 });

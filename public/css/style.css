@@ -1,0 +1,38 @@
+p{
+    color: black !important;
+}
+
+h1{
+    color: black;
+}
+
+.loginModal{
+    padding: 20px;
+}
+
+html{
+    background-color: #f9f9f9;
+}
+
+.container{
+    max-width: 800px !important;
+}
+
+body{
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+main{
+    flex: 1 0 auto;
+}
+
+.card-panel{
+    padding-bottom: 5px !important;
+    padding-top: 10px !important;
+}
+
+a{
+    text-decoration: none !important; 
+}

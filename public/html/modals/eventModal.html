@@ -1,0 +1,18 @@
+<div class="modal-header">
+    <button type="button" class="close" ng-click="closeEvent()">&times;</button>
+    <h2 class="modal-title center-align">Create Event</h2>
+    <div ng-show="error" class="card-panel red lighten-2">{{errorMessage}}</div>
+</div>
+<div class="modal-body">
+    <form ng-model="event" ng-submit="createEvent()">
+        <label for="name">Event Name</label>
+        <input type="text" ng-model="name" placeholder="Event Name" required>
+        <label for="description">Description</label>
+        <textarea class="materialize-textarea" placeholder="Description" ng-model="description" required></textarea>
+        <label for="date">Date</label>
+        <input type="date" ng-model="date" required/>
+        <label for="time">Time</label>
+        <input type="time" ng-model="time" required/><br><br>
+        <button type="submit" class="waves-effect waves-light btn light-blue lighten-1" ng-disabled="disabled">Create Event</button>
+	</form>
+</div>

@@ -1,0 +1,33 @@
+<div class="container"><br>
+    <nav class="light-blue lighten-1">
+        <div class="nav-wrapper">
+            <form>
+                <div class="input-field">
+                    <input type="search" id="search-field" ng-model="searchString" placeholder="Start typing to search...">
+                    <label class="label-icon" for="search"><i class="material-icons">search</i></label>
+                    <i class="material-icons">close</i>
+                </div>
+            </form>
+        </div>
+    </nav>
+    <br>
+    <div class="center-align">
+        <button ng-click="clickEvent()" class="waves-effect waves-light btn light-blue lighten-1">Create Event</button>
+    </div>
+    <br>
+    <div class="row">
+        <div ng-repeat="(index, event) in events | orderBy:'time':true | eventSearch:searchString">
+            <div class="col s6">
+                <div class="card">
+                    <div class="card-content">
+                        <div class="card-title"><b>{{event.name}}</b> - {{event.time}}</div>
+                        <p>{{event.description}}</p>
+                    </div>
+                    <div class="card-action">
+                        <button class="waves-effect waves-light btn light-blue lighten-1">Join Event</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

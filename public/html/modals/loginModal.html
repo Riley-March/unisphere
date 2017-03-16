@@ -1,0 +1,16 @@
+<div class="modal-header">
+    <button type="button" class="close" ng-click="closeLogin()">&times;</button>
+    <h2 class="modal-title center-align">Login</h2>
+</div>
+<div class="modal-body">
+    <div ng-show="error" class="card-panel red lighten-2">{{errorMessage}}</div>
+    <form ng-submit="login()">
+        <label for="name">Email Address</label>
+        <input type="email" ng-model="form.email" placeholder="Email Address" required/>
+        <label for="name">Password</label>
+        <input type="password" ng-model="form.password" placeholder="Password" required/>
+        <button type="submit" class="waves-effect waves-light btn light-blue lighten-1" ng-disabled="disabled">Login</button>
+        <br><br>
+        <a ng-click="forgotPassword()">Forgot Password?</a><br>
+    </form>
+</div>

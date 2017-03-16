@@ -1,0 +1,38 @@
+<div class="container"><br>
+    <nav class="light-blue lighten-1">
+        <div class="nav-wrapper">
+            <div class="input-field">
+                <input type="search" id="search-field" ng-model="searchString" placeholder="Start typing to search...">
+                <label class="label-icon" for="search"><i class="material-icons">search</i></label>
+                <i class="material-icons">close</i>
+            </div>
+        </div>
+    </nav><br>
+    <div class="card-panel">
+        <form id="postForm" ng-submit="submitPost()">
+            <div class="row">
+                <div class="input-field inline col s11">
+                    <input type="text" placeholder="Whats on your mind?" ng-model="message" required>
+                </div>
+                <div class="input-field inline col s1">
+                    <button class="waves-effect waves-light btn-floating light-blue lighten-1"><i class="material-icons">send</i></button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div ng-repeat="(index, post) in posts | orderBy:'_id':true | postSearch:searchString">
+        <div class="card">
+            <div class="card-panel z-depth-1">
+                <div class="row">
+                    <div class="col s2">
+                        <img src="/images/profilePic.jpg" class="circle responsive-img">
+                    </div>
+                    <div class="col s10">
+                        <p><b>{{post.username}}</b> - {{post.time}}</p>
+                        <p>{{post.text}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

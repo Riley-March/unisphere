@@ -1,0 +1,17 @@
+<div class="modal-header">
+    <button type="button" class="close" ng-click="closeProfile()">&times;</button>
+    <h2 class="modal-title center-align">Profile</h2>
+</div>
+<div class="modal-body">
+    <div ng-show="error" class="card-panel red lighten-2">{{errorMessage}}</div>
+    <div ng-show="success" class="card-panel teal lighten-2">{{successMessage}}</div>
+	<form ng-model="register" ng-submit="update()" enctype="multipart/form-data">
+        <label for="name">Full Name</label>
+        <input type="text" class="form-control" ng-model="name" placeholder="Full Name" required/>
+        <label for="alias">Alias</label>
+        <input type="text" class="form-control" ng-model="alias" placeholder="Alias e.g. Student" required/>
+        <label for="description">Description</label>
+        <textarea class="materialize-textarea" placeholder="Decription" ng-model="description" required></textarea><br>
+		<button type="submit" class="waves-effect waves-light btn light-blue lighten-1" ng-disabled="disabled">Update</button>
+	</form>
+</div>
