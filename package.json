@@ -1,38 +1,16 @@
 {
-  "scripts": {
-    "start": "nodemon server.js",
-    "dev": "nodemon server.js"
-  },
-  "main": "server.js",
-  "name": "Unisphere",
-  "description": "Unisphere is an exclusive online directory and notice board that automatically connects you with everyone at your University or Business.",
-  "version": "1.0.0",
-  "devDependencies": {
-    "nodemon": "^1.11.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Riley-March/unisphere_live.git"
-  },
-  "author": "Riley",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Riley-March/unisphere_live/issues"
-  },
-  "homepage": "https://github.com/Riley-March/unisphere_live#readme",
+  "name": "unisphere",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
-    "angular-ui-bootstrap": "^2.5.0",
-    "body-parser": "^1.16.1",
-    "cookie-parser": "^1.4.3",
-    "express": "^4.14.1",
-    "express-jwt": "^5.1.0",
-    "express-session": "^1.15.1",
-    "express-validator": "^3.1.2",
-    "jsonwebtoken": "^7.3.0",
-    "mongo": "^0.1.0",
-    "multer": "^1.3.0",
-    "mysql": "^2.13.0",
-    "nodemailer": "^3.1.4",
-    "request": "^2.79.0"
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-scripts": "1.1.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
   }
 }

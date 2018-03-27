@@ -16,7 +16,7 @@ var router = express.Router();
 var serverPort = 8080;
 var serverIPAddress = '127.0.0.1';
 
-app.use(express.static(path.join(__dirname, 'node_modules')));
+app.use('/scripts', express.static(path.join(__dirname, 'node_modules/')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
