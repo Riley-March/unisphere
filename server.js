@@ -1,29 +1,20 @@
 var express = require('express');
-var request = require('request');
-var path = require('path');
-var fileSystem = require('fs');
-var nodeMailer = require('nodemailer');
-var bodyParser = require('body-parser');
-var util = require('util');
-var uuid = require('uuid');
-var jwt = require('jsonwebtoken');
-var session = require('express-session');
 var multer = require('multer');
+var body_parser = require('body-parser');
+var path = require('path');
+var jwt = require('jsonwebtoken');
+
 var db = require('./database.js');
 
 var app = express();
-var router = express.Router();
-var serverPort = 8080;
-var serverIPAddress = '127.0.0.1';
 
-app.use(express.static(path.join(__dirname, 'node_modules')));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(session({secret: 'unisphere', saveUninitialized: true, resave: false}));
+
+app.use(body_parser.urlencoded({ extended: true }));
+app.use(body_parser.json());
 
 app.get('/*', function(req, res){
-    res.sendFile('index.html', { root: path.join(__dirname, './public/html') });
+    res.sendFile('hmtl/index.html');
 });
 
 app.post('/authenticate', function(req, res){

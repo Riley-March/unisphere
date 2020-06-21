@@ -6,7 +6,7 @@ unisphereApp.controller('LoginCtrl', function($scope, $http, $window, $location,
             animation: true,
             ariaLabelledBy: 'modal-title',
             ariaDescribedBy: 'modal-body',
-            templateUrl: '/html/modals/loginModal.html', 
+            templateUrl: '/html/modals/login_modal.html', 
             controller: 'LoginCtrl',
             scope: $scope
         });
